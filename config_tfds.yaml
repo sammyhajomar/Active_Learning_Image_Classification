@@ -1,0 +1,29 @@
+model: 
+  model : ResNet50
+  model_path : null
+  device  : cuda
+data:
+  dataset : tfds
+  dataset_name : cifar10
+  positive_class : 7
+train:
+  optimizer : 
+    name : SGD
+    config : 
+      lr : 0.01
+  loss_fn : 
+    name : BCELoss
+  batch_size : 64
+  epochs : 5
+active_learner:
+  iterations : 30
+  strategy : uncertainty_sampling
+  num_labelled : 50
+  limit : -1
+  labeler : 
+    method : autolabel
+    positive_class : 7
+  
+
+
+
