@@ -29,9 +29,9 @@ def load_model(**model_kwargs):
     if ssl_config:
         model_path = ssl_config['encoder']['encoder_path']
         if ssl_config['encoder']['encoder_type'] == 'SIMCLR':
-            encoder = SIMCLR.SIMCLR.load_from_checkpoint(model_path, DATA_PATH = GConst.UNLABELLED_DIR).encoder
+            encoder = SIMCLR.SIMCLR.load_from_checkpoint(model_path, DATA_PATH = GConst.UNLABELED_DIR).encoder
         elif ssl_config['encoder']['encoder_type'] == 'SIMSIAM':
-            encoder = SIMSIAM.SIMSIAM.load_from_checkpoint(model_path, DATA_PATH = GConst.UNLABELLED_DIR).encoder
+            encoder = SIMSIAM.SIMSIAM.load_from_checkpoint(model_path, DATA_PATH = GConst.UNLABELED_DIR).encoder
         
         if ssl_config["classifier"]["classifier_type"] == "SSLEvaluator":
             linear_model = SSLEvaluator(
@@ -91,23 +91,23 @@ def load_opt_loss(model, config, is_ssl = False):
 
 
 def initialise_data_dir():
-    if os.path.exists('Dataset/Labelled'):
-        shutil.rmtree('Dataset/Labelled')
+    if os.path.exists('Dataset/Labeled'):
+        shutil.rmtree('Dataset/Labeled')
     if os.path.exists('Dataset/Eval'):
         shutil.rmtree('Dataset/Eval')
     
     if os.path.exists('checkpoints/'):
         shutil.rmtree('checkpoints/')      
 
-    if os.path.exists('Dataset/To_Be_Labelled'):
-        shutil.rmtree('Dataset/To_Be_Labelled')
+    if os.path.exists('Dataset/To_Be_Labeled'):
+        shutil.rmtree('Dataset/To_Be_Labeled')
 
-    os.makedirs('Dataset/Labelled/positive/')
-    os.makedirs('Dataset/Labelled/negative/')
+    os.makedirs('Dataset/Labeled/positive/')
+    os.makedirs('Dataset/Labeled/negative/')
     os.makedirs('Dataset/Eval/positive/')
     os.makedirs('Dataset/Eval/negative/')
     os.makedirs('checkpoints/')
-    os.makedirs('Dataset/To_Be_Labelled/')
+    os.makedirs('Dataset/To_Be_Labeled/')
 
 def copy_data(paths, folder):
     for image in tqdm(paths):
@@ -116,27 +116,27 @@ def copy_data(paths, folder):
 
 def get_num_files(folder):
     if folder == "positive":
-        return len(list(paths.list_images(os.path.join(GConst.LABELLED_DIR,'positive'))))
+        return len(list(paths.list_images(os.path.join(GConst.LABELED_DIR,'positive'))))
     elif folder == 'negative':
-        return len(list(paths.list_images(os.path.join(GConst.LABELLED_DIR,'negative'))))
-    elif folder == 'unlabelled':
-        return len(list(paths.list_images(GConst.UNLABELLED_DIR)))
+        return len(list(paths.list_images(os.path.join(GConst.LABELED_DIR,'negative'))))
+    elif folder == 'unlabeled':
+        return len(list(paths.list_images(GConst.UNLABELED_DIR)))
     elif folder == 'eval_pos':
         return len(list(paths.list_images(os.path.join(GConst.EVAL_DIR,'positive'))))
     elif folder == 'eval_neg':
         return len(list(paths.list_images(os.path.join(GConst.EVAL_DIR,'negative'))))
-    elif folder == 'labelled':
-        return len(list(paths.list_images(GConst.LABELLED_DIR)))
-    elif folder == 'eval_labelled':
+    elif folder == 'labeled':
+        return len(list(paths.list_images(GConst.LABELED_DIR)))
+    elif folder == 'eval_labeled':
         return len(list(paths.list_images(GConst.EVAL_DIR)))
         
 def annotate_data(paths, folder):
     if folder == "positive":
-        copy_data(paths, os.path.join(GConst.LABELLED_DIR,'positive'))
+        copy_data(paths, os.path.join(GConst.LABELED_DIR,'positive'))
     elif folder == 'negative':
-        copy_data(paths, os.path.join(GConst.LABELLED_DIR,'negative'))
-    elif folder == 'unlabelled':
-        copy_data(paths, GConst.UNLABELLED_DIR)
+        copy_data(paths, os.path.join(GConst.LABELED_DIR,'negative'))
+    elif folder == 'unlabeled':
+        copy_data(paths, GConst.UNLABELED_DIR)
     elif folder == 'eval_pos':
         copy_data(paths, os.path.join(GConst.EVAL_DIR,'positive'))
     elif folder == 'eval_neg':

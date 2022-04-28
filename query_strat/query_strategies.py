@@ -7,7 +7,7 @@ from query_strat.query_utils import get_samples
 Design notes for custom strategies : 
 
 Input : 
-confidences:  Confidence values of all the unlabelled images
+confidences:  Confidence values of all the unlabeled images
 number : Number of images to be queried
 
 Output :

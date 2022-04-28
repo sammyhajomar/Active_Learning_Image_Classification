@@ -15,7 +15,7 @@ class AL_Dataset(Dataset):
                         transforms.ToTensor(),
                         transforms.Normalize((0, 0, 0),(1, 1, 1))])
     if limit == -1:
-      print("Getting confidences for entire unlabelled dataset")
+      print("Getting confidences for entire unlabeled dataset")
     else:
       print(f"Getting Confidences from random {limit} data")
       shuffle(self.unlabeled_imgs)

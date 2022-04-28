@@ -18,7 +18,7 @@ train:
 active_learner:
   iterations : 30
   strategy : uncertainty_sampling
-  num_labelled : 50
+  num_labeled : 50
   limit : -1
   labeler : 
     method : autolabel

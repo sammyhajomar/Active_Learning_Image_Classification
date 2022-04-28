@@ -7,6 +7,7 @@ from PIL import Image
 from random import shuffle
 import datetime 
 import re
+from tqdm import tqdm
 import sklearn.metrics as metrics
 import numpy as np
 import datetime 
@@ -43,6 +44,7 @@ def evaluate_al(model, eval_dataset, loss_fn):
   epoch_loss = []
   preds = []
   trues = []
+  batch_bar = tqdm(total=len(testloader), dynamic_ncols=True, leave=False, position=0, desc='Validation') 
   for data in testloader:
       images, labels = data
       labels = labels.to(torch.float32)
@@ -55,9 +57,10 @@ def evaluate_al(model, eval_dataset, loss_fn):
 
       preds.extend(outputs.detach().cpu().numpy())
       trues.extend(labels.detach().cpu().numpy())
-  # print(len(preds),len(trues))    
+      batch_bar.update()
+  batch_bar.close()
   acc, fscore = calculate_metrics(preds, trues, True)
-  print(f"On the whole dataset: \n Accuracy: {acc} \n F1 Score: {fscore}")
+  print(f"On the validation set: \n Valid Accuracy: {acc} \n F1 Score: {fscore}")
 
 def val_model_vanilla(model, eval_dataset, loss_fn):
   
@@ -127,7 +130,6 @@ def train_model_vanilla(model, train_datapath, eval_dataset=None, val_dataset=No
   graph_logs = {}
   graph_logs['val_f1'] = []
   graph_logs['len_data'] = []
-  st_prepare_data = time.time()
   for epoch in range(num_epochs):
     epoch_loss = []
     epoch_acc = []
@@ -158,10 +160,9 @@ def train_model_vanilla(model, train_datapath, eval_dataset=None, val_dataset=No
     val_fscore, val_acc, val_loss = val_model_vanilla(model, val_dataset, loss_fn)
     print('{:<10d}{:>4.2f}{:>13.2f}{:>13.2f}{:>13.2f}{:>13.2f}{:>13.2f}'.format(epoch, avg_loss, avg_acc, avg_fscore, val_loss, val_acc, val_fscore))
 
-    print("Validation F1 Score: ",val_fscore,"Total Data Used :",len(list(paths.list_images(GConst.LABELLED_DIR))))
-  print("--- TRAINING IN train_model_vanilla took: %s ---" % (time.time() - st_prepare_data))
+    print("Small Eval F1 Score: ",val_fscore,"Total Data Used :",len(list(paths.list_images(GConst.LABELED_DIR))))
   graph_logs['val_f1'].append(val_fscore)
-  graph_logs['len_data'].append(len(list(paths.list_images(GConst.LABELLED_DIR))))
+  graph_logs['len_data'].append(len(list(paths.list_images(GConst.LABELED_DIR))))
   
   fscore = 0.0
   auc = 0.0
@@ -172,10 +173,8 @@ def train_model_vanilla(model, train_datapath, eval_dataset=None, val_dataset=No
   model_path = "checkpoints/"+timestamp+ accuracies+ "_" + training_size+".params"
   torch.save(model.state_dict(), model_path)
   
-  print("Since our model has become confident enough, testing on leftover unlabeled data")
-  st_prepare_data = time.time()
-  # if eval_dataset:
-  #   evaluate_al(model, eval_dataset, loss_fn)
-  print("--- EVAL IN evaluate_al took: %s ---" % (time.time() - st_prepare_data))
+  print("Since our model has become confident enough, testing on validation data")
+  if eval_dataset:
+    evaluate_al(model, eval_dataset, loss_fn)
   return model_path, graph_logs
 

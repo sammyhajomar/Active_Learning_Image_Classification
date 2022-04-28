@@ -9,16 +9,16 @@ from train_model import calculate_metrics
 from custom_datasets import AL_Dataset
 import query_strat.query_strategies as query_strategies
 
-def get_low_conf_unlabeled_batched(model, image_paths, already_labelled, train_kwargs, **al_kwargs):
+def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kwargs, **al_kwargs):
 
   strategy = al_kwargs['strategy']
-  num_labelled = al_kwargs['num_labelled']
+  num_labeled = al_kwargs['num_labeled']
   limit = al_kwargs['limit']
 
   loss_fn = train_kwargs['loss_fn']
 
   confidences =  []
-  unlabeled_imgs = [os.path.expanduser(img) for img in image_paths if img not in already_labelled]
+  unlabeled_imgs = [os.path.expanduser(img) for img in image_paths if img not in already_labeled]
   t = transforms.Compose([
                         transforms.Resize((224,224)),
                         transforms.ToTensor(),
@@ -30,7 +30,7 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labelled, train_k
   confidences = {'conf_vals': [],
                  'loc' : []}
 
-  batch_bar = tqdm(total=len(data_loader), dynamic_ncols=True, leave=False, position=0, desc='Eval Whole Dataset') 
+  batch_bar = tqdm(total=len(data_loader), dynamic_ncols=True, leave=False, position=0, desc='Get Most Uncertain Samples') 
   with torch.no_grad():
     for _, data in enumerate(data_loader):
       image, loc = data
@@ -45,7 +45,7 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labelled, train_k
   batch_bar.close()
   confidences['conf_vals'] = np.array(confidences['conf_vals'])
 
-  query_results = getattr(query_strategies, strategy)(confidences, num_labelled)
+  query_results = getattr(query_strategies, strategy)(confidences, num_labeled)
 
   return query_results
 
