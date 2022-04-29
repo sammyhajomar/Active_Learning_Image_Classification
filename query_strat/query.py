@@ -25,14 +25,14 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
                         transforms.Normalize((0, 0, 0),(1, 1, 1))])
  
   dataset = AL_Dataset(unlabeled_imgs, limit, t)
-  data_loader = torch.utils.data.DataLoader(dataset, shuffle=False, num_workers=4, batch_size=64) #add num workers arg
+  unlabeled_loader = torch.utils.data.DataLoader(dataset, shuffle=False, num_workers=4, batch_size=64) #add num workers arg
 
   confidences = {'conf_vals': [],
                  'loc' : []}
 
-  batch_bar = tqdm(total=len(data_loader), dynamic_ncols=True, leave=False, position=0, desc='Get Most Uncertain Samples') 
+  batch_bar = tqdm(total=len(unlabeled_loader), dynamic_ncols=True, leave=False, position=0, desc='Get Most Uncertain Samples') 
   with torch.no_grad():
-    for _, data in enumerate(data_loader):
+    for _, data in enumerate(unlabeled_loader):
       image, loc = data
       outputs = model(image.to('cuda'))
       outputs = outputs.detach().cpu().numpy().reshape(-1).tolist()

@@ -8,8 +8,8 @@ class ResNet50(nn.Module):
     super(ResNet50, self).__init__()
     self.enc= torchvision.models.resnet50(pretrained = True)
     self.enc.fc = nn.Sequential(
-    nn.Linear(2048, 1, bias = True),
-    nn.Sigmoid()
+    nn.Linear(2048, 10),
+    # nn.Sigmoid()
     )
 
   def forward(self, x):

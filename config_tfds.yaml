@@ -12,7 +12,7 @@ train:
     config : 
       lr : 0.01
   loss_fn : 
-    name : BCELoss
+    name : CrossEntropyLoss
   batch_size : 64
   epochs : 5
 active_learner:
