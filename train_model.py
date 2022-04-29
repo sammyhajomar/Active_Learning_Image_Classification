@@ -66,7 +66,7 @@ def evaluate_al(model, eval_dataset, loss_fn):
   acc, fscore = calculate_metrics(preds, trues, True)
   print(f"On the validation set: \n Valid Accuracy: {acc} \n F1 Score: {fscore}")
 
-def val_model_vanilla(model, val_loader, loss_fn,batch_size):
+def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   
   epoch_loss = []
   epoch_acc = []
@@ -74,7 +74,7 @@ def val_model_vanilla(model, val_loader, loss_fn,batch_size):
   num_correct_val = 0
   total_loss_val = 0
   model.eval()
-  batch_bar = tqdm(total=len(val_loader), dynamic_ncols=True, leave=False, position=0, desc='Validation') 
+  batch_bar = tqdm(total=len(val_loader), dynamic_ncols=True, leave=False, position=0, desc='Val') 
   for i,(images,labels) in enumerate(val_loader):
       images = images.to('cuda')
       labels = labels.to('cuda')
@@ -97,9 +97,8 @@ def val_model_vanilla(model, val_loader, loss_fn,batch_size):
       batch_bar.update()
   batch_bar.close()
 
-
-  valid_acc = num_correct_val / (len(val_loader) * batch_size)
-  print("Val Acc.: {:.04f}%, Train Loss {:.04f},".format(100 * valid_acc,float(total_loss_val / len(val_loader))))
+  valid_acc = num_correct_val / len(val_dataset)
+  print("Val Acc: {:.04f}%, Train Loss {:.04f},".format(100 * valid_acc,float(total_loss_val / len(val_dataset))))
 
   return num_correct_val,total_loss_val
 
@@ -189,7 +188,7 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
         float(optimizer.param_groups[0]['lr'])))
 
     # val_fscore, val_acc, val_loss = val_model_vanilla(model, val_loader, loss_fn)
-    num_correct_val,total_loss_val = val_model_vanilla(model, val_loader, loss_fn,batch_size)
+    num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size)
     
 
 

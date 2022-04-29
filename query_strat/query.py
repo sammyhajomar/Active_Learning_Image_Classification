@@ -31,11 +31,14 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
                  'loc' : []}
 
   batch_bar = tqdm(total=len(unlabeled_loader), dynamic_ncols=True, leave=False, position=0, desc='Get Most Uncertain Samples') 
+  model.eval()
   with torch.no_grad():
     for _, data in enumerate(unlabeled_loader):
       image, loc = data
       outputs = model(image.to('cuda'))
-      outputs = outputs.detach().cpu().numpy().reshape(-1).tolist()
+
+      outputs = torch.argmax(outputs,axis=1)
+      outputs = outputs.detach().cpu().numpy() #.tolist()
 
       confidences['loc'].extend(loc)
       confidences['conf_vals'].extend(outputs)

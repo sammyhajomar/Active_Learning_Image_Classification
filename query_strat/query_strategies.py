@@ -24,9 +24,10 @@ def least_confidence(confidences, number):
 def uncertainty_sampling(confidences, number):
     
     print("Using Uncertainty Strategy")
+
     # tmp_query = np.array([confidences[i][1] for i in range(len(confidences))])
-    difference_array = np.absolute(confidences['conf_vals'] - 0.5) 
-    uncertain_elements = difference_array.argsort()[:number]
+    difference_array = 1 - confidences['conf_vals'] 
+    uncertain_elements = difference_array.argsort()[::-1][:number]
     query_paths = list(itemgetter(*uncertain_elements)(confidences['loc']))
     return query_paths
 

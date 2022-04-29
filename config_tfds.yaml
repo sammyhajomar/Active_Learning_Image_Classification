@@ -14,7 +14,7 @@ train:
   loss_fn : 
     name : CrossEntropyLoss
   batch_size : 64
-  epochs : 5
+  epochs : 1
 active_learner:
   iterations : 30
   strategy : uncertainty_sampling
