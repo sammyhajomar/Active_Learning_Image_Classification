@@ -44,7 +44,7 @@ class Pipeline:
         self.optim, self.loss = load_opt_loss(self.model, self.config)
         self.already_labeled = list()
         self.transform = transforms.Compose([
-                          # transforms.Resize((224,224)),
+                          transforms.Resize((224,224)),
                           transforms.ToTensor(),
                           transforms.Normalize((0, 0, 0),(1, 1, 1))])
         

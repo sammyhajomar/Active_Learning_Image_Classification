@@ -5,7 +5,6 @@ from operator import itemgetter
 from tqdm import tqdm
 import torch
 
-from train_model import calculate_metrics
 from custom_datasets import AL_Dataset
 import query_strat.query_strategies as query_strategies
 

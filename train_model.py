@@ -19,53 +19,6 @@ from imutils import paths
 import global_constants as GConst
 
 
-def calculate_metrics(preds, trues, cm=False):
-
-    print("preds",preds)
-    print("trues",trues)
-    fscore = metrics.f1_score(trues, preds)
-    print("fscore",fscore)
-    preds = [1 if preds[i] >= 0.5 else 0 for i in range(len(preds))]  
-    acc = [1 if preds[i] == trues[i] else 0 for i in range(len(preds))]
-    trues = [int(true.item()) for true in trues]
-    ### Summing over all correct predictions
-    acc = np.sum(acc) / len(preds)
-    
-    if cm:
-      print("Confusion Matrix:")
-      print(metrics.confusion_matrix(
-            trues,preds,labels=[0,1]
-        ))
-    fscore = metrics.f1_score(trues, preds,average='binary')
-    return (acc * 100), fscore
-    
-
-def evaluate_al(model, eval_dataset, loss_fn):
-  
-  testloader = torch.utils.data.DataLoader(eval_dataset, batch_size=64,
-                                      shuffle=True, num_workers=4)
-
-  epoch_loss = []
-  preds = []
-  trues = []
-  batch_bar = tqdm(total=len(testloader), dynamic_ncols=True, leave=False, position=0, desc='Validation') 
-  for data in testloader:
-      images, labels = data
-      labels = labels.to(torch.float32)
-      labels = labels.reshape((labels.shape[0], 1)).to('cuda')
-      outputs = model(images.to('cuda'))
-      
-      loss = loss_fn(outputs, labels)
-      loss = loss.item()
-      epoch_loss.append(loss)
-
-      preds.extend(outputs.detach().cpu().numpy())
-      trues.extend(labels.detach().cpu().numpy())
-      batch_bar.update()
-  batch_bar.close()
-  acc, fscore = calculate_metrics(preds, trues, True)
-  print(f"On the validation set: \n Valid Accuracy: {acc} \n F1 Score: {fscore}")
-
 def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   
   epoch_loss = []
@@ -119,14 +72,8 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
                           transforms.Normalize((0, 0, 0),(1, 1, 1))
   ])
 
-  val_t = transforms.Compose([
-                          transforms.Resize((224,224)),
-                          transforms.ToTensor(),
-                          transforms.Normalize((0, 0, 0),(1, 1, 1))])
-
 
   train_dataset = ImageFolder(train_datapath, transform=t)
-  val_dataset = ImageFolder(GConst.VAL_DIR, transform = val_t)
   train_imgs = train_dataset.imgs
 
   train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
@@ -134,10 +81,8 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
 
   val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
                                     shuffle=False, num_workers=4)
-
+  print("train_dataset length:", len(train_dataset))
   print("Training")
-  # print('{:<10s}{:>4s}{:>12s}{:>12s}{:>12s}{:>12s}{:>12s}'.format("Epoch", "Train Loss", "Train Acc", "Train F1", "Val Loss", "Val Acc", "Val F1"))
-
   graph_logs = {}
   graph_logs['val_f1'] = []
   graph_logs['len_data'] = []
@@ -169,11 +114,6 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
             num_correct=num_correct,
             lr="{:.04f}".format(float(optimizer.param_groups[0]['lr'])))
 
-
-        # acc, fscore = calculate_metrics(outputs, labels)
-        # epoch_acc.append(acc)
-        # epoch_f1.append(fscore)
-
         loss.backward()
         optimizer.step()
         batch_bar.update()
@@ -187,33 +127,6 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
         float(total_loss / len(train_loader)),
         float(optimizer.param_groups[0]['lr'])))
 
-    # val_fscore, val_acc, val_loss = val_model_vanilla(model, val_loader, loss_fn)
     num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size)
     
-
-
-    # avg_acc = np.mean(epoch_acc) 
-    # avg_loss = np.mean(epoch_loss)
-    # avg_fscore = np.mean(epoch_f1)
-    
-    # print('{:<10d}{:>4.2f}{:>13.2f}{:>13.2f}{:>13.2f}{:>13.2f}{:>13.2f}'.format(epoch, avg_loss, avg_acc, avg_fscore, val_loss, val_acc, val_fscore))
-
-    # print("Small Eval F1 Score: ",val_fscore,"Total Data Used :",len(list(paths.list_images(GConst.LABELED_DIR))))
-
-  # graph_logs['val_f1'].append(val_fscore)
-  # graph_logs['len_data'].append(len(list(paths.list_images(GConst.LABELED_DIR))))
-  
-  # fscore = 0.0
-  # auc = 0.0
-
-  # timestamp = re.sub('\.[0-9]*','_',str(datetime.datetime.now())).replace(" ", "_").replace("-", "").replace(":","")
-  # training_size = str(len(train_imgs))
-  # accuracies = str(fscore)+"_"+str(auc)
-  # model_path = "checkpoints/"+timestamp+ accuracies+ "_" + training_size+".params"
-  # torch.save(model.state_dict(), model_path)
-  
-  print("Since our model has become confident enough, testing on validation data")
-  # if val_dataset:
-  #   evaluate_al(model, val_dataset, loss_fn)
-  # return model_path, graph_logs
 
