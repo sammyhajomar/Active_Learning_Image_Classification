@@ -4,6 +4,7 @@ from torchvision import transforms
 from operator import itemgetter
 from tqdm import tqdm
 import torch
+from diversity_sampling import pick_top_n
 
 from custom_datasets import AL_Dataset
 import query_strat.query_strategies as query_strategies
@@ -36,18 +37,26 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
       image, loc = data
       outputs = model(image.to('cuda'))
 
-      outputs = torch.argmax(outputs,axis=1)
+      # outputs = torch.argmax(outputs,axis=1)
       outputs = outputs.detach().cpu().numpy() #.tolist()
 
       confidences['loc'].extend(loc)
-      confidences['conf_vals'].extend(outputs)
+      
+      confidences['conf_vals'].append(outputs)
 
       batch_bar.update()
 
   batch_bar.close()
-  confidences['conf_vals'] = np.array(confidences['conf_vals'])
 
-  query_results = getattr(query_strategies, strategy)(confidences, num_labeled)
+  confidences['conf_vals'] = np.concatenate(confidences['conf_vals'])
+  confidences['loc'] = np.array(confidences['loc'])
 
-  return query_results
+
+  uncertainty_scores = getattr(query_strategies, strategy)(confidences, num_labeled)
+  # close to 1 is more uncertain
+  
+  # now take uncertainties and use it to perform diversity sampling.
+  selected_filepaths = pick_top_n(uncertainty_scores, confidences['loc'], num_labeled)
+
+  raise NotImplementedError
 
