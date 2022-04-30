@@ -1,6 +1,6 @@
 import numpy as np
 from operator import itemgetter
-
+from scipy.stats import entropy
 from query_strat.query_utils import get_samples
 
 '''
@@ -14,24 +14,57 @@ Output :
 Paths of all the intelligently queried images
 '''
 
+def entropy_based(confidences, number):
+
+    print("Using Entropy Based")
+
+    entropies = entropy(confidences["conf_vals"], axis = 1)
+
+    entropies = (entropies - entropies.mean(axis = 1)) / entropies.std(axis = 1)
+
+    assert len(confidences["loc"]) == len(entropies)
+
+    # path_to_score = dict(zip(confidences["loc"], entropies))
+
+    return entropies
+
+    
+
+
+
+
+def margin_based(confidences, number):
+
+    print("Using Margin Based")
+
+    max_indices = np.argmax(confidences['conf_vals'], axis = 1)
+    
+    max_vals = confidences[max_indices]
+
+    # making max to a low number that cannot be reselected
+    confidences[max_indices] = -1
+    second_max_vals = np.max(confidences['conf_vals'], axis = 1)
+    difference_array = max_vals - second_max_vals
+
+    difference_array = (difference_array - difference_array.mean(axis = 1)) / difference_array.std(axis = 1)
+
+    assert len(confidences["loc"]) == len(difference_array)
+
+    # path_to_score = dict(zip(confidences["loc"], difference_array))
+
+    return difference_array
+
 
 def least_confidence(confidences, number):
-    print("Using Least Confidence Strategy")
-    least_conf_indices = np.argsort(confidences['conf_vals'])
-    query_paths = list(itemgetter(*least_conf_indices)(confidences['loc']))
-    return query_paths[:number]
-
-def uncertainty_sampling(confidences, number):
     
-    print("Using Uncertainty Strategy")
+    print("Using Least Confidence")
 
-    # tmp_query = np.array([confidences[i][1] for i in range(len(confidences))])
-    difference_array = 1 - confidences['conf_vals'] 
-    uncertain_elements = difference_array.argsort()[::-1][:number]
-    query_paths = list(itemgetter(*uncertain_elements)(confidences['loc']))
-    return query_paths
+    difference_array = 1 - np.max(confidences['conf_vals'], axis = 1)
 
-def gaussian_sampling(confidences, number):
+    difference_array = (difference_array - difference_array.mean(axis = 1)) / difference_array.std(axis = 1)
+    
+    assert len(confidences["loc"]) == len(difference_array)
 
-    print("Using Gaussian Strategy")
-    return get_samples(confidences['loc'], confidences['conf_vals'],number)
+    # path_to_score = dict(zip(confidences["loc"], difference_array))
+
+    return difference_array
