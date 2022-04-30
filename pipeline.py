@@ -37,16 +37,13 @@ class Pipeline:
 
     def __init__(self, config_path) -> None:
         self.config = load_config(config_path)
-
         self.model_kwargs = self.config['model']
-        self.optim, self.loss = load_opt_loss(self.model, self.config)
         self.already_labeled = list()
         self.transform = transforms.Compose([
                           transforms.Resize((224,224)),
                           transforms.ToTensor(),
                           transforms.Normalize((0, 0, 0),(1, 1, 1))])
         
-
     def main(self):
         config = self.config  
         if config['data']['dataset'] == 'tfds':
@@ -65,12 +62,6 @@ class Pipeline:
             val_dataset = ImageFolder(GConst.VAL_DIR, transform=self.transform)
             test_dataset = ImageFolder(GConst.TEST_DIR, transform = self.transform)
 
-            train_config = config['train']
-            train_kwargs = dict(epochs = train_config['epochs'],
-                                opt = self.optim,
-                                loss_fn = self.loss, 
-                                batch_size = train_config['batch_size'],
-                                )
 
             al_config = config['active_learner']
             al_kwargs = dict(
@@ -81,10 +72,10 @@ class Pipeline:
                             num_labeled = al_config['num_labeled'],
                             limit  = al_config['limit']
                             )
-            logs = self.train_al(unlabeled_images, train_kwargs, **al_kwargs)
+            logs = self.train_al(unlabeled_images, **al_kwargs)
 
 
-    def train_al(self, model, unlabeled_images, train_kwargs, **al_kwargs):
+    def train_al(self, unlabeled_images, **al_kwargs):
         iter1 = 0
         val_dataset = al_kwargs['val_dataset']
         test_dataset = al_kwargs['test_dataset']
@@ -93,10 +84,16 @@ class Pipeline:
         logs = {'ckpt_path' : [],
                 'graph_logs': []}
 
+        train_config = self.config['train']
         while iter1 < num_iters:
             print(f'-------------------{iter1 +1}----------------------')
             iter1 += 1
             model = load_model(**self.model_kwargs)
+            optim, loss = load_opt_loss(model, self.config)
+            train_kwargs = dict(epochs = train_config['epochs'],
+                    opt = optim,
+                    loss_fn = loss,
+                    batch_size = train_config['batch_size'])
             train_model_vanilla(model, GConst.LABELED_DIR, val_dataset, test_dataset, **train_kwargs)
             # logs['ckpt_path'].append(ckpt_path)
             # logs['graph_logs'].append(graph_logs)
@@ -106,6 +103,5 @@ class Pipeline:
                     self.already_labeled.append(image)
                     label = image.split('/')[-1].split('_')[0]
                     shutil.copy(image, os.path.join(GConst.LABELED_DIR,label,image.split('/')[-1]))
-            # print("Total Labeled Data: Positive {} Negative {}".format(get_num_files('positive'), get_num_files('negative')))
 
         return logs
