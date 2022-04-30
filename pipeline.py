@@ -26,7 +26,7 @@ from operator import itemgetter
 import global_constants as GConst
 warnings.filterwarnings("ignore")
 
-from utils import (copy_data, load_config, load_model, load_opt_loss, initialise_data_dir, annotate_data, get_num_files)
+from utils import load_config, load_model, load_opt_loss
 import tfds
 from train_model import train_model_vanilla
 from query_strat.query import get_low_conf_unlabeled_batched
@@ -37,10 +37,8 @@ class Pipeline:
 
     def __init__(self, config_path) -> None:
         self.config = load_config(config_path)
-        # initialise_data_dir()
 
-        model_kwargs = self.config['model']
-        self.model = load_model(**model_kwargs)
+        self.model_kwargs = self.config['model']
         self.optim, self.loss = load_opt_loss(self.model, self.config)
         self.already_labeled = list()
         self.transform = transforms.Compose([
@@ -48,7 +46,6 @@ class Pipeline:
                           transforms.ToTensor(),
                           transforms.Normalize((0, 0, 0),(1, 1, 1))])
         
-        # self.labeler = Labeler(self.config)
 
     def main(self):
         config = self.config  
@@ -60,12 +57,9 @@ class Pipeline:
             tfds_prepare = tfds.PrepareData(dataset_name)
             tfds_prepare.download_and_prepare()
 
-            #Initialising data by annotating labeled and eval
+            #Initialising data by annotating labeled
             unlabeled_images = list(paths.list_images(GConst.UNLABELED_DIR))
-            # self.already_labeled = tfds.tfds_annotate(unlabeled_images, 100, self.already_labeled, labeled_dir=GConst.EVAL_DIR, val=True)
             self.already_labeled = tfds.tfds_annotate(unlabeled_images, 500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
-            # print("Total Eval Data: Positive {} Negative {}".format(get_num_files("eval_pos"),get_num_files('eval_neg')))
-            # print("Total Labeled Data: Positive {} Negative {}".format(get_num_files("positive"),get_num_files('negative')))
 
             #Train 
             val_dataset = ImageFolder(GConst.VAL_DIR, transform=self.transform)
@@ -87,7 +81,7 @@ class Pipeline:
                             num_labeled = al_config['num_labeled'],
                             limit  = al_config['limit']
                             )
-            logs = self.train_al(self.model, unlabeled_images, train_kwargs, **al_kwargs)
+            logs = self.train_al(unlabeled_images, train_kwargs, **al_kwargs)
 
 
     def train_al(self, model, unlabeled_images, train_kwargs, **al_kwargs):
@@ -102,7 +96,8 @@ class Pipeline:
         while iter1 < num_iters:
             print(f'-------------------{iter1 +1}----------------------')
             iter1 += 1
-            train_model_vanilla(self.model, GConst.LABELED_DIR, val_dataset, test_dataset, **train_kwargs)
+            model = load_model(**self.model_kwargs)
+            train_model_vanilla(model, GConst.LABELED_DIR, val_dataset, test_dataset, **train_kwargs)
             # logs['ckpt_path'].append(ckpt_path)
             # logs['graph_logs'].append(graph_logs)
             low_confs = get_low_conf_unlabeled_batched(model, unlabeled_images, self.already_labeled, train_kwargs, **al_kwargs)

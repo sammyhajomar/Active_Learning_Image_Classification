@@ -17,7 +17,7 @@ train:
   epochs : 1
 active_learner:
   iterations : 30
-  strategy : uncertainty_sampling
+  strategy : least_confidence
   num_labeled : 50
   limit : -1
   labeler : 

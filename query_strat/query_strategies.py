@@ -28,10 +28,6 @@ def entropy_based(confidences, number):
 
     return entropies
 
-    
-
-
-
 
 def margin_based(confidences, number):
 

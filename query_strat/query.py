@@ -4,7 +4,7 @@ from torchvision import transforms
 from operator import itemgetter
 from tqdm import tqdm
 import torch
-from diversity_sampling import pick_top_n
+from query_strat.diversity_sampling import pick_top_n
 
 from custom_datasets import AL_Dataset
 import query_strat.query_strategies as query_strategies
