@@ -14,3 +14,7 @@ def iterative_proximity_sampling(uncertainty_scores, filepaths, number):
 
 def clustering_sampling(uncertainty_scores, filepaths, number):
   raise NotImplementedError
+
+
+def random_sampling(uncertainty_scores, filepaths, number):
+  raise NotImplementedError
