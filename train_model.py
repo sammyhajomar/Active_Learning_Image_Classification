@@ -53,10 +53,16 @@ def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   valid_acc = num_correct_val / len(val_dataset)
   print("Val Acc: {:.04f}%, Train Loss {:.04f},".format(100 * valid_acc,float(total_loss_val / len(val_dataset))))
 
+  file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+  file1.write(f"Validation Acc: {(100 * valid_acc):.2f}%" + "\n")
+  file1.write(f"--------------------------\n")
+  file1.close()
+
+
   return num_correct_val,total_loss_val
 
 
-def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=None, **train_kwargs):
+def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_dataset=None, **train_kwargs):
 
   num_epochs = train_kwargs['epochs']
   batch_size = train_kwargs['batch_size']
@@ -81,6 +87,11 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
 
   val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
                                     shuffle=False, num_workers=4)
+
+  file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+  file1.write(f"--------Iter Num {counter}---------")
+  file1.close()
+
   print("train_dataset length:", len(train_dataset))
   print("Training")
   graph_logs = {}
@@ -120,6 +131,12 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
     batch_bar.close()
     scheduler.step()
 
+    file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+    file1.write("\n" + f"Epoch: {epoch+1}" + "\n")
+    file1.write(f"Training Acc: {100 * num_correct / (len(train_loader) * batch_size):.2f}%" + "\n")
+    file1.write(f"lr: {optimizer.param_groups[0]['lr']}" + "\n")
+    file1.close()
+
 
     print("Epoch {}/{}: Train Acc {:.04f}%, Train Loss {:.04f}, Learning Rate {:.04f}".format(
         epoch + 1,
@@ -129,5 +146,8 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
         float(optimizer.param_groups[0]['lr'])))
 
     num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size)
+
+
     
+
 

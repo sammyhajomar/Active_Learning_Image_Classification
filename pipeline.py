@@ -87,6 +87,10 @@ class Pipeline:
                 'graph_logs': []}
 
         train_config = self.config['train']
+        file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+        file1.write(f"{GConst.start_name}__{GConst.diversity_name}\n")
+        file1.close()
+
         while iter1 < num_iters:
             print(f'-------------------{iter1 +1}----------------------')
             iter1 += 1
@@ -100,7 +104,7 @@ class Pipeline:
                     loss_fn = loss,
                     batch_size = train_config['batch_size'],
                     scheduler = scheduler)
-            train_model_vanilla(model, GConst.LABELED_DIR, val_dataset, test_dataset, **train_kwargs)
+            train_model_vanilla(model, GConst.LABELED_DIR,iter1, val_dataset, test_dataset, **train_kwargs)
             # logs['ckpt_path'].append(ckpt_path)
             # logs['graph_logs'].append(graph_logs)
             low_confs = get_low_conf_unlabeled_batched(model, unlabeled_images, self.already_labeled, train_kwargs, **al_kwargs)

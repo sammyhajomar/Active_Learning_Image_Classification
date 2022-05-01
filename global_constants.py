@@ -20,3 +20,9 @@ UNLABELED_DIR = f"{dataset_name}/unlabeled"
 SWIPE_LABELLER_DIR = "external_lib/Swipe-Labeler/api/api.py"
 
 IMAGE_PATH_COL = 'image_paths'
+
+
+start_name = config['active_learner']['strategy']
+diversity_name = config['active_learner']['diversity_sampling']
+
+
