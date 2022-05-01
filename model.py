@@ -3,12 +3,12 @@ import torchvision
 import torch.nn as nn
 
 
-class ResNet50(nn.Module):
+class ResNet18(nn.Module):
   def __init__(self, **model_kwargs):
-    super(ResNet50, self).__init__()
-    self.enc= torchvision.models.resnet50(pretrained = True)
+    super(ResNet18, self).__init__()
+    self.enc= torchvision.models.resnet18(pretrained = True)
     self.enc.fc = nn.Identity() 
-    self.true_fc = nn.Linear(2048, 10)
+    self.true_fc = nn.Linear(512, 10)
         
 
   def forward(self, x, want_embeddings = False):

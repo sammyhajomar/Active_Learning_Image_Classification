@@ -18,6 +18,7 @@ import shutil
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torch.utils.data import Dataset
+from torch import optim
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import importlib
@@ -41,8 +42,7 @@ class Pipeline:
         self.already_labeled = list()
         self.transform = transforms.Compose([
                           transforms.Resize((224,224)),
-                          transforms.ToTensor(),
-                          transforms.Normalize((0, 0, 0),(1, 1, 1))])
+                          transforms.ToTensor()])
         
     def main(self):
         config = self.config  
@@ -56,7 +56,7 @@ class Pipeline:
 
             #Initialising data by annotating labeled
             unlabeled_images = list(paths.list_images(GConst.UNLABELED_DIR))
-            self.already_labeled = tfds.tfds_annotate(unlabeled_images, 500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
+            self.already_labeled = tfds.tfds_annotate(unlabeled_images, 1500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
 
             #Train 
             val_dataset = ImageFolder(GConst.VAL_DIR, transform=self.transform)
@@ -91,11 +91,15 @@ class Pipeline:
             print(f'-------------------{iter1 +1}----------------------')
             iter1 += 1
             model = load_model(**self.model_kwargs)
-            optim, loss = load_opt_loss(model, self.config)
+            optimizer, loss = load_opt_loss(model, self.config)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 1, gamma = 0.925)
+
+
             train_kwargs = dict(epochs = train_config['epochs'],
-                    opt = optim,
+                    opt = optimizer,
                     loss_fn = loss,
-                    batch_size = train_config['batch_size'])
+                    batch_size = train_config['batch_size'],
+                    scheduler = scheduler)
             train_model_vanilla(model, GConst.LABELED_DIR, val_dataset, test_dataset, **train_kwargs)
             # logs['ckpt_path'].append(ckpt_path)
             # logs['graph_logs'].append(graph_logs)

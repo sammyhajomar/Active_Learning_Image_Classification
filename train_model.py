@@ -1,6 +1,7 @@
 import torch
 import torchvision 
 import torch.nn as nn
+from torch import optim
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from PIL import Image
@@ -17,7 +18,6 @@ import re
 import time
 from imutils import paths
 import global_constants as GConst
-
 
 def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   
@@ -62,14 +62,14 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
   batch_size = train_kwargs['batch_size']
   optimizer = train_kwargs['opt']
   loss_fn = train_kwargs['loss_fn']
+  scheduler = train_kwargs['scheduler']
 
   t = transforms.Compose([
                           transforms.Resize((224,224)),
                           transforms.RandomHorizontalFlip(p=0.5),
-                          transforms.RandomRotation(15),
-                          transforms.RandomCrop(224),
-                          transforms.ToTensor(),
-                          transforms.Normalize((0, 0, 0),(1, 1, 1))
+                          transforms.RandomRotation(30),
+                          torchvision.transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+                          transforms.ToTensor()
   ])
 
 
@@ -118,6 +118,7 @@ def train_model_vanilla(model, train_datapath, val_dataset=None, test_dataset=No
         optimizer.step()
         batch_bar.update()
     batch_bar.close()
+    scheduler.step()
 
 
     print("Epoch {}/{}: Train Acc {:.04f}%, Train Loss {:.04f}, Learning Rate {:.04f}".format(

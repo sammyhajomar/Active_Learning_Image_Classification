@@ -12,8 +12,7 @@ class AL_Dataset(Dataset):
     self.unlabeled_imgs = unlabeled_imgs
     self.transform =  transforms.Compose([
                         transforms.Resize((224,224)),
-                        transforms.ToTensor(),
-                        transforms.Normalize((0, 0, 0),(1, 1, 1))])
+                        transforms.ToTensor()])
     if limit == -1:
       print("Getting confidences for entire unlabeled dataset")
     else:

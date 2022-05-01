@@ -48,7 +48,7 @@ def load_opt_loss(model, config, is_ssl = False):
         )
     else:
         optimizer = getattr(optim, opt_params['name'])(
-                    model.parameters(), **opt_params.get('config', {}))
+                    model.parameters(), momentum=0.9, weight_decay=1e-4, **opt_params.get('config', {}))
 
     loss_fn = getattr(nn, loss_params['name'])(**loss_kwargs)
 

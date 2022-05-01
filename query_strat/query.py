@@ -21,8 +21,7 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
   unlabeled_imgs = [os.path.expanduser(img) for img in image_paths if img not in already_labeled]
   t = transforms.Compose([
                         transforms.Resize((224,224)),
-                        transforms.ToTensor(),
-                        transforms.Normalize((0, 0, 0),(1, 1, 1))])
+                        transforms.ToTensor()])
  
   dataset = AL_Dataset(unlabeled_imgs, limit, t)
   unlabeled_loader = torch.utils.data.DataLoader(dataset, shuffle=False, num_workers=4, batch_size=64) #add num workers arg

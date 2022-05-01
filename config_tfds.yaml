@@ -1,5 +1,5 @@
 model: 
-  model : ResNet50
+  model : ResNet18
   model_path : null
   device  : cuda
 data:
@@ -10,16 +10,16 @@ train:
   optimizer : 
     name : SGD
     config : 
-      lr : 0.01
+      lr : 0.02
   loss_fn : 
     name : CrossEntropyLoss
-  batch_size : 64
-  epochs : 1
+  batch_size : 128
+  epochs : 25
 active_learner:
   iterations : 30
-  strategy : margin_based
-  diversity_sampling : iterative_proximity_sampling
-  num_labeled : 50
+  strategy : least_confidence
+  diversity_sampling : pick_top_n
+  num_labeled : 1500
   limit : -1
   labeler : 
     method : autolabel
