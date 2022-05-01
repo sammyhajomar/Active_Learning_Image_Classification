@@ -4,14 +4,14 @@ from torchvision import transforms
 from operator import itemgetter
 from tqdm import tqdm
 import torch
-from query_strat.diversity_sampling import pick_top_n
-
+from query_strat.diversity_sampling import pick_top_n, iterative_proximity_sampling, clustering_sampling, random_sampling
+from query_strat.query_strategies import entropy_based, margin_based, least_confidence
 from custom_datasets import AL_Dataset
-import query_strat.query_strategies as query_strategies
 
 def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kwargs, **al_kwargs):
 
   strategy = al_kwargs['strategy']
+  diversity_sampling = al_kwargs['diversity_sampling']
   num_labeled = al_kwargs['num_labeled']
   limit = al_kwargs['limit']
 
@@ -32,14 +32,18 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
 
   batch_bar = tqdm(total=len(unlabeled_loader), dynamic_ncols=True, leave=False, position=0, desc='Get Most Uncertain Samples') 
   model.eval()
+  all_embeddings = []
+
   with torch.no_grad():
     for _, data in enumerate(unlabeled_loader):
       image, loc = data
-      outputs = model(image.to('cuda'))
+      outputs, embeddings = model(image.to('cuda'), True)
 
       # outputs = torch.argmax(outputs,axis=1)
       outputs = outputs.detach().cpu().numpy() #.tolist()
+      embeddings = embeddings.detach().cpu().numpy()
 
+      all_embeddings.append(embeddings)
       confidences['loc'].extend(loc)
       
       confidences['conf_vals'].append(outputs)
@@ -48,15 +52,39 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
 
   batch_bar.close()
 
+  all_embeddings = np.concatenate(all_embeddings)
+
+
+
   confidences['conf_vals'] = np.concatenate(confidences['conf_vals'])
+
   confidences['loc'] = np.array(confidences['loc'])
 
-
-  uncertainty_scores = getattr(query_strategies, strategy)(confidences, num_labeled)
+  if strategy == 'margin_based':
+    uncertainty_scores = margin_based(confidences)
+  elif strategy == 'least_confidence':
+    uncertainty_scores = least_confidence(confidences)
+  elif strategy == 'entropy_based':
+    uncertainty_scores = entropy_based(confidences)
+  else:
+    assert False
+    
   # close to 1 is more uncertain
-  
   # now take uncertainties and use it to perform diversity sampling.
-  selected_filepaths = pick_top_n(uncertainty_scores, confidences['loc'], num_labeled)
 
-  raise NotImplementedError
+  if diversity_sampling == "pick_top_n":
+    selected_filepaths = pick_top_n(uncertainty_scores, confidences['loc'], num_labeled)
+  elif diversity_sampling == "iterative_proximity_sampling":
+    selected_filepaths = iterative_proximity_sampling(uncertainty_scores, confidences['loc'], num_labeled, all_embeddings)
+  elif diversity_sampling == "clustering_sampling":
+    selected_filepaths = clustering_sampling(uncertainty_scores, confidences['loc'], num_labeled, all_embeddings)
+  elif diversity_sampling == "random_sampling":
+    selected_filepaths = random_sampling(confidences['loc'], num_labeled)
+  else:
+    assert False
+
+  #making sure there are no duplicates. 
+  assert len(selected_filepaths) == len(set(selected_filepaths))
+
+  return selected_filepaths
 

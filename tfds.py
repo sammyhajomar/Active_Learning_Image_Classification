@@ -25,7 +25,8 @@ class PrepareData:
           label = label.numpy()
           serialized_im = tf.image.encode_jpeg(img)
           img_path = f'{label}_{img_num}.jpg'
-          if set_type['train'] < len(ds)*0.80:
+          if set_type['train'] < len(ds)*0.8:
+            #MAKING HUGE CHANGE PLEASE DONT FORGET ^^^^^^ CHRISTIAN was 0.8
             path_and_name = os.path.join(self.dataset_name,"unlabeled",img_path)
             set_type['train'] += 1
           elif set_type['valid'] < len(ds)*0.10:

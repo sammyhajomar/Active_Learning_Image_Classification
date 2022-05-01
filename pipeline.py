@@ -68,9 +68,11 @@ class Pipeline:
                             val_dataset = val_dataset, 
                             test_dataset=  test_dataset, 
                             strategy = al_config['strategy'],
+                            diversity_sampling = al_config['diversity_sampling'],
                             num_iters = al_config['iterations'],
                             num_labeled = al_config['num_labeled'],
                             limit  = al_config['limit']
+
                             )
             logs = self.train_al(unlabeled_images, **al_kwargs)
 
