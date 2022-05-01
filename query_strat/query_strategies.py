@@ -64,8 +64,8 @@ def margin_based(confidences):
     
     # print("second_max_vals.shape: ", second_max_vals.shape)
     
-
-    difference_array = max_vals - second_max_vals
+    # make sure to negate below. Since lower margin is more uncertain
+    difference_array = - (max_vals - second_max_vals)
 
     difference_array = (difference_array - difference_array.mean()) / difference_array.std()
 
