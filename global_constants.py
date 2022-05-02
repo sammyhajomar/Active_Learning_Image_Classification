@@ -21,6 +21,8 @@ SWIPE_LABELLER_DIR = "external_lib/Swipe-Labeler/api/api.py"
 
 IMAGE_PATH_COL = 'image_paths'
 
+DATASET_NAME = f'{dataset_name}'
+
 
 start_name = config['active_learner']['strategy']
 diversity_name = config['active_learner']['diversity_sampling']

@@ -53,7 +53,7 @@ def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   valid_acc = num_correct_val / len(val_dataset)
   print("Val Acc: {:.04f}%, Train Loss {:.04f},".format(100 * valid_acc,float(total_loss_val / len(val_dataset))))
 
-  file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+  file1 = open(f"/content/drive/MyDrive/{GConst.DATASET_NAME}_{GConst.start_name}_{GConst.diversity_name}.txt","a")
   file1.write(f"Validation Acc: {(100 * valid_acc):.2f}%" + "\n")
   file1.write(f"--------------------------\n")
   file1.close()
@@ -88,7 +88,7 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
   val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
                                     shuffle=False, num_workers=4)
 
-  file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+  file1 = open(f"/content/drive/MyDrive/{GConst.DATASET_NAME}_{GConst.start_name}_{GConst.diversity_name}.txt","a")
   file1.write(f"--------Iter Num {counter}---------")
   file1.close()
 
@@ -131,7 +131,7 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
     batch_bar.close()
     scheduler.step()
 
-    file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
+    file1 = open(f"/content/drive/MyDrive/{GConst.DATASET_NAME}_{GConst.start_name}_{GConst.diversity_name}.txt","a")
     file1.write("\n" + f"Epoch: {epoch+1}" + "\n")
     file1.write(f"Training Acc: {100 * num_correct / (len(train_loader) * batch_size):.2f}%" + "\n")
     file1.write(f"lr: {optimizer.param_groups[0]['lr']}" + "\n")

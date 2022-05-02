@@ -10,11 +10,13 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import pandas as pd
 import numpy as np
+import gdown
 
 
 class PrepareData:
-    def __init__(self,dataset_name):
+    def __init__(self,dataset_name,config):
         self.dataset_name = dataset_name
+        self.config = config
 
     def tfds_io(self,ds):
       img_paths = []
@@ -26,7 +28,6 @@ class PrepareData:
           serialized_im = tf.image.encode_jpeg(img)
           img_path = f'{label}_{img_num}.jpg'
           if set_type['train'] < len(ds)*0.8:
-            #MAKING HUGE CHANGE PLEASE DONT FORGET ^^^^^^ CHRISTIAN was 0.8
             path_and_name = os.path.join(self.dataset_name,"unlabeled",img_path)
             set_type['train'] += 1
           elif set_type['valid'] < len(ds)*0.10:
@@ -47,6 +48,7 @@ class PrepareData:
 
 
     def download_and_prepare(self):
+      if self.config['data']['dataset_name'] != 'resisc45':
         tfds.disable_progress_bar()
 
         try:
@@ -76,6 +78,32 @@ class PrepareData:
         if os.path.exists('checkpoints/'):
           shutil.rmtree('checkpoints/')
         os.makedirs('checkpoints/')
+    
+      else:
+        full_path = os.path.join(os.getcwd(), "RESISC45")
+        # if os.path.exists(full_path):
+        #     shutil.rmtree(full_path)
+        download_path = os.path.join(os.getcwd(), "RESISC45.rar")
+        url = 'https://drive.google.com/uc?id=14zEhqi9mczZaLEb33TQuKbhmurn2ClGL&export=download'
+        output = 'RESISC45.rar'
+        if not os.path.isfile(download_path):
+          gdown.download(url, output, quiet=False)
+
+        if not os.path.exists('RESISC45'):
+          commands = [
+          "unrar x {}".format(download_path),
+          "mv NWPU-RESISC45/ RESISC45/"]
+          # "rm {}".format(download_path)]
+          os.system( " && ".join(commands))
+
+        folder = 'Dataset/Unlabelled'
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+        pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
+        for i in tqdm(paths.list_images(full_path)):
+            shutil.copy(i, os.path.join(folder, i.split('/')[-1]))
+        print('Downloaded and prepared RESISC-45')
 
         print(f'Downloaded and prepared {self.dataset_name}')
 
@@ -83,12 +111,24 @@ class PrepareData:
 def tfds_annotate(image_paths, num_images, already_labeled, labeled_dir, val=False):
   # if not val:
     num_labeled = 0
-    label_types = {}
     shuffle(image_paths)
-    image_paths_sample = random.sample(image_paths,num_images)
+    label_types = {}
+    for img in image_paths:
+      label = img.split('/')[-1].split('_')[0]
+      if label not in label_types:
+        label_types[label] = 1
+        shutil.copy(img, os.path.join(labeled_dir,label,img.split('/')[-1]))
+        already_labeled.append(img)
+  
+    image_paths_sample = random.sample(image_paths,num_images - len(label_types))
     for image in image_paths_sample:
       if image not in already_labeled:
           label = image.split('/')[-1].split('_')[0]
+          if label not in label_types:
+            label_types[label] = 1
+          else:
+            label_types[label] += 1
+          
           shutil.copy(image, os.path.join(labeled_dir,label,image.split('/')[-1]))
           num_labeled += 1
           already_labeled.append(image)

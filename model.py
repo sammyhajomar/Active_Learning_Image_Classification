@@ -8,7 +8,7 @@ class ResNet18(nn.Module):
     super(ResNet18, self).__init__()
     self.enc= torchvision.models.resnet18(pretrained = True)
     self.enc.fc = nn.Identity() 
-    self.true_fc = nn.Linear(512, 10)
+    self.true_fc = nn.Linear(512, 21)
         
 
   def forward(self, x, want_embeddings = False):
