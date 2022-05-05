@@ -19,13 +19,15 @@ import time
 from imutils import paths
 import global_constants as GConst
 
-def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
+def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size, last_epoch=False):
   
   epoch_loss = []
   epoch_acc = []
   epoch_f1 = []
   num_correct_val = 0
   total_loss_val = 0
+  true = []
+  pred = []
   model.eval()
   batch_bar = tqdm(total=len(val_loader), dynamic_ncols=True, leave=False, position=0, desc='Val') 
   for i,(images,labels) in enumerate(val_loader):
@@ -43,6 +45,10 @@ def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
       num_correct_val += int((outputs == labels).sum())
       total_loss_val += float(loss)
       
+      if last_epoch:
+        true.append(labels.detach().cpu().numpy())
+        pred.append(outputs.detach().cpu().numpy())
+
       batch_bar.set_postfix(
           acc="{:.04f}%".format(100 * num_correct_val / ((i + 1) * batch_size)),
           loss="{:.04f}".format(float(total_loss_val / (i + 1))))
@@ -58,6 +64,11 @@ def val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size):
   file1.write(f"--------------------------\n")
   file1.close()
 
+  if last_epoch:
+    print("CLASSIFICATION REPORT")
+    print(metrics.classification_report(np.concatenate(true), np.concatenate(pred)))
+    print("CONFUSION MATRIX")
+    print(metrics.confusion_matrix(np.concatenate(true), np.concatenate(pred)))
 
   return num_correct_val,total_loss_val
 
@@ -129,14 +140,12 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
         optimizer.step()
         batch_bar.update()
     batch_bar.close()
-    scheduler.step()
 
     file1 = open(f"/content/drive/MyDrive/{GConst.DATASET_NAME}_{GConst.start_name}_{GConst.diversity_name}.txt","a")
     file1.write("\n" + f"Epoch: {epoch+1}" + "\n")
     file1.write(f"Training Acc: {100 * num_correct / (len(train_loader) * batch_size):.2f}%" + "\n")
     file1.write(f"lr: {optimizer.param_groups[0]['lr']}" + "\n")
     file1.close()
-
 
     print("Epoch {}/{}: Train Acc {:.04f}%, Train Loss {:.04f}, Learning Rate {:.04f}".format(
         epoch + 1,
@@ -145,7 +154,12 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
         float(total_loss / len(train_loader)),
         float(optimizer.param_groups[0]['lr'])))
 
-    num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size)
+    scheduler.step()
+
+    if epoch == num_epochs - 1:
+      num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size,last_epoch=True)
+    else:
+      num_correct_val,total_loss_val = val_model_vanilla(model,val_dataset, val_loader, loss_fn,batch_size,last_epoch=False)
 
 
     

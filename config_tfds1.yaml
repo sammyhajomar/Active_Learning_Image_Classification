@@ -1,0 +1,26 @@
+model: 
+  model : ResNet18
+  model_path : null
+  device  : cuda
+data:
+  dataset : tfds
+  dataset_name : uc_merced
+  positive_class : 7
+train:
+  optimizer : 
+    name : SGD
+    config : 
+      lr : 0.02
+  loss_fn : 
+    name : CrossEntropyLoss
+  batch_size : 128
+  epochs : 25
+active_learner:
+  iterations : 20
+  strategy : entropy_based
+  diversity_sampling : pick_top_n
+  num_labeled : 80
+  limit : -1
+  labeler : 
+    method : autolabel
+    positive_class : 7
