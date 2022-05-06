@@ -4,7 +4,7 @@ model:
   device  : cuda
 data:
   dataset : tfds
-  dataset_name : uc_merced
+  dataset_name : cifar10
   positive_class : 7
 train:
   optimizer : 
@@ -17,9 +17,9 @@ train:
   epochs : 25
 active_learner:
   iterations : 20
-  strategy : least_confidence
+  strategy : margin_based
   diversity_sampling : pick_top_n
-  num_labeled : 80
+  num_labeled : 1500
   limit : -1
   labeler : 
     method : autolabel

@@ -56,7 +56,7 @@ class Pipeline:
 
             #Initialising data by annotating labeled
             unlabeled_images = list(paths.list_images(GConst.UNLABELED_DIR))
-            self.already_labeled = tfds.tfds_annotate(unlabeled_images, 80, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
+            self.already_labeled = tfds.tfds_annotate(unlabeled_images, 1500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
 
             #Train 
             val_dataset = ImageFolder(GConst.VAL_DIR, transform=self.transform)
