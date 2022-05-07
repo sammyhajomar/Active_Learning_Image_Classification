@@ -4,8 +4,7 @@ model:
   device  : cuda
 data:
   dataset : tfds
-  dataset_name : cifar10
-  positive_class : 7
+  dataset_name : uc_merced
 train:
   optimizer : 
     name : SGD
@@ -19,12 +18,7 @@ active_learner:
   iterations : 20
   strategy : margin_based
   diversity_sampling : pick_top_n
-  num_labeled : 1500
+  num_labeled : 80
   limit : -1
   labeler : 
     method : autolabel
-    positive_class : 7
-  
-
-
-

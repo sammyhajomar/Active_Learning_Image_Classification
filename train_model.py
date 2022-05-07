@@ -80,6 +80,7 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
   optimizer = train_kwargs['opt']
   loss_fn = train_kwargs['loss_fn']
   scheduler = train_kwargs['scheduler']
+  scaler = train_kwargs['scaler']
 
   t = transforms.Compose([
                           transforms.Resize((224,224)),
@@ -122,10 +123,11 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
         
         optimizer.zero_grad()
 
-        outputs = model(inputs)
-        loss = loss_fn(outputs, labels)
-        epoch_loss.append(loss.item())
+        with torch.cuda.amp.autocast():
+          outputs = model(inputs)
+          loss = loss_fn(outputs, labels)
 
+        epoch_loss.append(loss.item())
         outputs = torch.argmax(outputs, axis=1)
         num_correct += int((outputs == labels).sum())
         total_loss += float(loss)
@@ -136,8 +138,10 @@ def train_model_vanilla(model, train_datapath, counter, val_dataset=None, test_d
             num_correct=num_correct,
             lr="{:.04f}".format(float(optimizer.param_groups[0]['lr'])))
 
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+
         batch_bar.update()
     batch_bar.close()
 

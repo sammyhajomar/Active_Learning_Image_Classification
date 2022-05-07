@@ -18,7 +18,7 @@ import shutil
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torch.utils.data import Dataset
-from torch import optim
+from torch import optim, cuda
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import importlib
@@ -28,10 +28,9 @@ import global_constants as GConst
 warnings.filterwarnings("ignore")
 
 from utils import load_config, load_model, load_opt_loss
-import tfds
+import tfds_support
 from train_model import train_model_vanilla
 from query_strat.query import get_low_conf_unlabeled_batched
-from custom_datasets import RESISC_Eval
 
 
 class Pipeline:
@@ -50,15 +49,14 @@ class Pipeline:
             dataset_name = config['data']['dataset_name']
             dataset_path = os.path.join(os.getcwd(), dataset_name)
             print("Dataset:", dataset_name)
-            positive_class = str(config['data']['positive_class'])
-            tfds_prepare = tfds.PrepareData(dataset_name,config)
+            tfds_prepare = tfds_support.PrepareData(dataset_name,config)
             tfds_prepare.download_and_prepare()
 
             #Initialising data by annotating labeled
             unlabeled_images = list(paths.list_images(GConst.UNLABELED_DIR))
-            self.already_labeled = tfds.tfds_annotate(unlabeled_images, 1500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
+            self.already_labeled = tfds_support.tfds_annotate(unlabeled_images, 1500, self.already_labeled, labeled_dir=GConst.LABELED_DIR)
 
-            #Train 
+            #Create validation and test dataset objects 
             val_dataset = ImageFolder(GConst.VAL_DIR, transform=self.transform)
             test_dataset = ImageFolder(GConst.TEST_DIR, transform = self.transform)
 
@@ -74,7 +72,7 @@ class Pipeline:
                             limit  = al_config['limit']
 
                             )
-            logs = self.train_al(unlabeled_images, **al_kwargs)
+            self.train_al(unlabeled_images, **al_kwargs)
 
 
     def train_al(self, unlabeled_images, **al_kwargs):
@@ -83,9 +81,6 @@ class Pipeline:
         test_dataset = al_kwargs['test_dataset']
         num_iters = al_kwargs['num_iters']
         
-        logs = {'ckpt_path' : [],
-                'graph_logs': []}
-
         train_config = self.config['train']
         file1 = open(f"/content/drive/MyDrive/{GConst.start_name}_{GConst.diversity_name}.txt","a")
         file1.write(f"{GConst.start_name}__{GConst.diversity_name}\n")
@@ -97,21 +92,18 @@ class Pipeline:
             model = load_model(**self.model_kwargs)
             optimizer, loss = load_opt_loss(model, self.config)
             scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 1, gamma = 0.925)
-
+            scaler = cuda.amp.GradScaler()
 
             train_kwargs = dict(epochs = train_config['epochs'],
                     opt = optimizer,
                     loss_fn = loss,
                     batch_size = train_config['batch_size'],
-                    scheduler = scheduler)
+                    scheduler = scheduler,
+                    scaler = scaler)
             train_model_vanilla(model, GConst.LABELED_DIR,iter1, val_dataset, test_dataset, **train_kwargs)
-            # logs['ckpt_path'].append(ckpt_path)
-            # logs['graph_logs'].append(graph_logs)
             low_confs = get_low_conf_unlabeled_batched(model, unlabeled_images, self.already_labeled, train_kwargs, **al_kwargs)
             for image in low_confs:
                 if image not in self.already_labeled:
                     self.already_labeled.append(image)
                     label = image.split('/')[-1].split('_')[0]
                     shutil.copy(image, os.path.join(GConst.LABELED_DIR,label,image.split('/')[-1]))
-
-        return logs

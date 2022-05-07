@@ -14,7 +14,6 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
   diversity_sampling = al_kwargs['diversity_sampling']
   num_labeled = al_kwargs['num_labeled']
   limit = al_kwargs['limit']
-
   loss_fn = train_kwargs['loss_fn']
 
   confidences =  []
@@ -34,12 +33,11 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
   all_embeddings = []
 
   with torch.no_grad():
-    for _, data in enumerate(unlabeled_loader):
-      image, loc = data
+    for _, (image, loc) in enumerate(unlabeled_loader):
+      
       outputs, embeddings = model(image.to('cuda'), True)
 
-      # outputs = torch.argmax(outputs,axis=1)
-      outputs = outputs.detach().cpu().numpy() #.tolist()
+      outputs = outputs.detach().cpu().numpy()
       embeddings = embeddings.detach().cpu().numpy()
 
       all_embeddings.append(embeddings)
@@ -65,6 +63,8 @@ def get_low_conf_unlabeled_batched(model, image_paths, already_labeled, train_kw
     uncertainty_scores = least_confidence(confidences)
   elif strategy == 'entropy_based':
     uncertainty_scores = entropy_based(confidences)
+  elif strategy == 'random_sampling':
+    print("You are using random sampling for your uncertainty criteria.")
   else:
     assert False
     
