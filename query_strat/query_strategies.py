@@ -1,7 +1,6 @@
 import numpy as np
 from operator import itemgetter
 from scipy.stats import entropy
-from query_strat.query_utils import get_samples
 
 '''
 Design notes for custom strategies : 
